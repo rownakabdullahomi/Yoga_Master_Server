@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -44,12 +44,39 @@ async function run() {
         const result = await classCollection.insertOne(newClass);
         res.send(result);
     })
+    // get all classes
+    app.get("/all/classes", async(req, res)=>{
+        const result = await classCollection.find().toArray();
+        res.send(result);
+    })
     // get classes based on status
     app.get("/classes", async(req, res)=>{
         const query = {status : "approved"};
         const result = await classCollection.find(query).toArray();
         res.send(result);
     })
+    // get classes by an instructor's email
+    app.get("/classes/:email", async(req, res) => {
+        const email = req. params.email;
+        const query = {instructorEmail: email};
+        const result = await classCollection.find(query).toArray();
+        res.send(result);
+    })
+    // update status of a class
+    app.patch("/change-status/:id", async(req, res) => {
+        const id = req.params.id;
+        const {status, reason} = req.body;
+        const query = {_id: new ObjectId(id)};
+        const updatedDoc = {
+            $set:{
+                status,
+                reason
+            }
+        }
+        const result = await classCollection.updateOne(query, updatedDoc);
+        res.send(result);
+    })
+
 
 
 
