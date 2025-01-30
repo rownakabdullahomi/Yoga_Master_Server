@@ -105,6 +105,7 @@ async function run() {
         })
 
         // Cart Routes--------------------
+
         // post a cart
         app.post("/add-to-cart", async(req, res)=>{
             const newCartItem = req.body;
@@ -119,6 +120,18 @@ async function run() {
             const query = { classId: id, email };
             const projection = {classId: 1};
             const result = await cartCollection.findOne(query, {projection});
+            res.send(result);
+        })
+
+        // get cart info by user email
+        app.get("/cart/:email", async (req, res) => {
+            const email = req.params.email;
+            const query = {email};
+            const projection = {classId: 1};
+            const cartItems = await cartCollection.find(query, {projection}).toArray();
+            const classIds = cartItems.map(item => new ObjectId(item.classId));
+            const query2 = {_id: {$in: classIds}};
+            const result = await classCollection.find(query2).toArray();
             res.send(result);
         })
 
