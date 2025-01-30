@@ -16,66 +16,74 @@ const uri = process.env.DB_CONNECTION_STRING;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    }
 });
 
 async function run() {
-  try {
-    // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
+    try {
+        // Connect the client to the server	(optional starting in v4.7)
+        // await client.connect();
 
 
-    const userCollection = client.db("yogaMasterDB").collection("users");
-    const classCollection = client.db("yogaMasterDB").collection("classes");
-    const cartCollection = client.db("yogaMasterDB").collection("cart");
-    const paymentCollection = client.db("yogaMasterDB").collection("payments");
-    const enrolledCollection = client.db("yogaMasterDB").collection("enrolled");
-    const ordersCollection = client.db("yogaMasterDB").collection("orders");
-    const appliedCollection = client.db("yogaMasterDB").collection("applied");
+        const userCollection = client.db("yogaMasterDB").collection("users");
+        const classCollection = client.db("yogaMasterDB").collection("classes");
+        const cartCollection = client.db("yogaMasterDB").collection("cart");
+        const paymentCollection = client.db("yogaMasterDB").collection("payments");
+        const enrolledCollection = client.db("yogaMasterDB").collection("enrolled");
+        const ordersCollection = client.db("yogaMasterDB").collection("orders");
+        const appliedCollection = client.db("yogaMasterDB").collection("applied");
 
-    // classes routes
-    // post a class
-    app.post("/new-class", async(req, res)=>{
-        const newClass = req.body;
-        const result = await classCollection.insertOne(newClass);
-        res.send(result);
-    })
-    // get all classes
-    app.get("/all/classes", async(req, res)=>{
-        const result = await classCollection.find().toArray();
-        res.send(result);
-    })
-    // get classes based on status
-    app.get("/classes", async(req, res)=>{
-        const query = {status : "approved"};
-        const result = await classCollection.find(query).toArray();
-        res.send(result);
-    })
-    // get classes by an instructor's email
-    app.get("/classes/:email", async(req, res) => {
-        const email = req. params.email;
-        const query = {instructorEmail: email};
-        const result = await classCollection.find(query).toArray();
-        res.send(result);
-    })
-    // update status of a class
-    app.patch("/change-status/:id", async(req, res) => {
-        const id = req.params.id;
-        const {status, reason} = req.body;
-        const query = {_id: new ObjectId(id)};
-        const updatedDoc = {
-            $set:{
-                status,
-                reason
+        // classes routes
+        // post a class
+        app.post("/new-class", async (req, res) => {
+            const newClass = req.body;
+            const result = await classCollection.insertOne(newClass);
+            res.send(result);
+        })
+        // get all classes
+        app.get("/all/classes", async (req, res) => {
+            const result = await classCollection.find().toArray();
+            res.send(result);
+        })
+        // get a single class by id
+        app.get("/class/:id", async(req,res)=>{
+            const id = req.params.id;
+            const query = {_id: new ObjectId(id)};
+            const result = await classCollection.findOne(query);
+            res.send(result);
+        })
+        // get classes based on status
+        app.get("/approved/classes", async (req, res) => {
+            const query = { status: "approved" };
+            const result = await classCollection.find(query).toArray();
+            res.send(result);
+        })
+        // get classes by an instructor's email
+        app.get("/classes/:email", async (req, res) => {
+            const email = req.params.email;
+            const query = { instructorEmail: email };
+            const result = await classCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        // update status of a class
+        app.patch("/change-status/:id", async (req, res) => {
+            const id = req.params.id;
+            const { status, reason } = req.body;
+            const query = { _id: new ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    status,
+                    reason
+                }
             }
-        }
-        const result = await classCollection.updateOne(query, updatedDoc);
-        res.send(result);
-    })
+            const result = await classCollection.updateOne(query, updatedDoc);
+            res.send(result);
+        })
 
 
 
@@ -86,13 +94,13 @@ async function run() {
 
 
 
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
-  }
+        // Send a ping to confirm a successful connection
+        await client.db("admin").command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    } finally {
+        // Ensures that the client will close when you finish/error
+        // await client.close();
+    }
 }
 run().catch(console.dir);
 
@@ -103,6 +111,6 @@ app.get("/", (req, res) => {
     res.send("Hello from Yoga Master");
 })
 
-app.listen(port, ()=>{
+app.listen(port, () => {
     console.log(`Yoga Master listening on port: ${port}`);
 })
