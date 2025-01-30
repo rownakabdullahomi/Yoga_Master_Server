@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -107,43 +108,56 @@ async function run() {
         // Cart Routes--------------------
 
         // post a cart
-        app.post("/add-to-cart", async(req, res)=>{
+        app.post("/add-to-cart", async (req, res) => {
             const newCartItem = req.body;
             const result = await cartCollection.insertOne(newCartItem);
             res.send(result);
         })
 
         // get cart item by id
-        app.get("/cart-item/:id", async(req, res)=>{
-            const id = req. params.id;
+        app.get("/cart-item/:id", async (req, res) => {
+            const id = req.params.id;
             const email = req.body.email;
             const query = { classId: id, email };
-            const projection = {classId: 1};
-            const result = await cartCollection.findOne(query, {projection});
+            const projection = { classId: 1 };
+            const result = await cartCollection.findOne(query, { projection });
             res.send(result);
         })
 
         // get cart info by user email
         app.get("/cart/:email", async (req, res) => {
             const email = req.params.email;
-            const query = {email};
-            const projection = {classId: 1};
-            const cartItems = await cartCollection.find(query, {projection}).toArray();
+            const query = { email };
+            const projection = { classId: 1 };
+            const cartItems = await cartCollection.find(query, { projection }).toArray();
             const classIds = cartItems.map(item => new ObjectId(item.classId));
-            const query2 = {_id: {$in: classIds}};
+            const query2 = { _id: { $in: classIds } };
             const result = await classCollection.find(query2).toArray();
             res.send(result);
         })
 
         // delete a cart item
-        app.delete("/delete-cart-item/:id", async(req, res) => {
+        app.delete("/delete-cart-item/:id", async (req, res) => {
             const id = req.params.id;
-            const query = {classId : id};
+            const query = { classId: id };
             const result = await cartCollection.deleteOne(query);
             res.send(result);
         })
 
         // Payments Route
+
+        app.post("/create-payment-intent", async (req, res) => {
+            const { price } = req.body;
+            const amount = parseInt(price) * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount,
+                currency: "usd",
+                payment_method_types: ["card"]
+            })
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            })
+        })
 
 
 
