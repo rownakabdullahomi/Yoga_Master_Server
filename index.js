@@ -38,9 +38,16 @@ async function run() {
     const appliedCollection = client.db("yogaMasterDB").collection("applied");
 
     // classes routes
+    // post a class
     app.post("/new-class", async(req, res)=>{
         const newClass = req.body;
         const result = await classCollection.insertOne(newClass);
+        res.send(result);
+    })
+    // get classes based on status
+    app.get("/classes", async(req, res)=>{
+        const query = {status : "approved"};
+        const result = await classCollection.find(query).toArray();
         res.send(result);
     })
 
