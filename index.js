@@ -193,6 +193,14 @@ async function run() {
             res.send({ paymentResult, deletedResult, enrolledResult, updatedResult });
         })
 
+        // payment history length
+        app.get('/payment-history-length/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { userEmail: email };
+            const total = await paymentCollection.countDocuments(query);
+            res.send({ total });
+        })
+
 
 
 
