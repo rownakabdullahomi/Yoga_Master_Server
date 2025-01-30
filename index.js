@@ -135,6 +135,16 @@ async function run() {
             res.send(result);
         })
 
+        // delete a cart item
+        app.delete("/delete-cart-item/:id", async(req, res) => {
+            const id = req.params.id;
+            const query = {classId : id};
+            const result = await cartCollection.deleteOne(query);
+            res.send(result);
+        })
+
+        // Payments Route
+
 
 
 
