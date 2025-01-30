@@ -1,12 +1,13 @@
 require("dotenv").config();
 const express = require('express');
+const cors = require('cors');
 const morgan = require('morgan');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-
+app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
@@ -26,23 +27,34 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
+
+
+    const userCollection = client.db("yogaMasterDB").collection("users");
+    const classCollection = client.db("yogaMasterDB").collection("classes");
+    const cartCollection = client.db("yogaMasterDB").collection("cart");
+    const paymentCollection = client.db("yogaMasterDB").collection("payments");
+    const enrolledCollection = client.db("yogaMasterDB").collection("enrolled");
+    const ordersCollection = client.db("yogaMasterDB").collection("orders");
+    const appliedCollection = client.db("yogaMasterDB").collection("applied");
+
+    // classes routes
+    app.post("/new-class", async(req, res)=>{
+        const newClass = req.body;
+        const result = await classCollection.insertOne(newClass);
+        res.send(result);
+    })
+
+
+
+
+
+
+
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
