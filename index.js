@@ -93,15 +93,32 @@ async function run() {
             const updatedDoc = {
                 $set: {
                     name,
-                    description, 
-                    price, 
-                    availableSeats, 
+                    description,
+                    price,
+                    availableSeats,
                     videoLink,
                     status: "pending",
-
                 }
             }
             const result = await classCollection.updateOne(query, updatedDoc);
+            res.send(result);
+        })
+
+        // Cart Routes--------------------
+        // post a cart
+        app.post("/add-to-cart", async(req, res)=>{
+            const newCartItem = req.body;
+            const result = await cartCollection.insertOne(newCartItem);
+            res.send(result);
+        })
+
+        // get cart item by id
+        app.get("/cart-item/:id", async(req, res)=>{
+            const id = req. params.id;
+            const email = req.body.email;
+            const query = { classId: id, email };
+            const projection = {classId: 1};
+            const result = await cartCollection.findOne(query, {projection});
             res.send(result);
         })
 
