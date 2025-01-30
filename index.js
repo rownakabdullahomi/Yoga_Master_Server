@@ -50,9 +50,9 @@ async function run() {
             res.send(result);
         })
         // get a single class by id
-        app.get("/class/:id", async(req,res)=>{
+        app.get("/class/:id", async (req, res) => {
             const id = req.params.id;
-            const query = {_id: new ObjectId(id)};
+            const query = { _id: new ObjectId(id) };
             const result = await classCollection.findOne(query);
             res.send(result);
         })
@@ -70,7 +70,7 @@ async function run() {
             res.send(result);
         })
 
-        // update status of a class
+        // update status and reason of a class
         app.patch("/change-status/:id", async (req, res) => {
             const id = req.params.id;
             const { status, reason } = req.body;
@@ -79,6 +79,26 @@ async function run() {
                 $set: {
                     status,
                     reason
+                }
+            }
+            const result = await classCollection.updateOne(query, updatedDoc);
+            res.send(result);
+        })
+
+        // update a class
+        app.put("/update-class/:id", async (req, res) => {
+            const id = req.params.id;
+            const { name, description, price, availableSeats, videoLink } = req.body;
+            const query = { _id: new ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    name,
+                    description, 
+                    price, 
+                    availableSeats, 
+                    videoLink,
+                    status: "pending",
+
                 }
             }
             const result = await classCollection.updateOne(query, updatedDoc);
