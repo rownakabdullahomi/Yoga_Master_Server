@@ -38,6 +38,58 @@ async function run() {
         const ordersCollection = client.db("yogaMasterDB").collection("orders");
         const appliedCollection = client.db("yogaMasterDB").collection("applied");
 
+
+        // users apis
+        // post a new user
+        app.post("/new-user", async (req, res) => {
+            const newUser = req.body;
+            const result = await userCollection.insertOne(newUser);
+            res.send(result);
+        })
+
+        // get all users
+        app.post("/users", async (req, res) => {
+            const result = await userCollection.find().toArray();
+            res.send(result);
+        })
+
+        // get user by id
+        app.post("/user/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await userCollection.findOne(query);
+            res.send(result);
+        })
+        // get user by email
+        app.post("/user/:email", async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const result = await userCollection.findOne(query);
+            res.send(result);
+        })
+
+        // delete user by id
+        app.delete("/delete-user/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await userCollection.deleteOne(query);
+            res.send(result);
+        })
+
+        // update user by id
+        app.put("/user/:id", async (req, res) => {
+            const id = req.params.id;
+            const { name, role, email, address, phone, about, photoUrl, skills } = req.body;
+            const query = { _id: new ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    name, role, email, address, phone, about, photoUrl, skills: skills ? skills : null
+                }
+            }
+            const result = await userCollection.updateOne(query, updatedDoc);
+            res.send(result);
+        })
+
         // classes routes
         // post a class
         app.post("/new-class", async (req, res) => {
@@ -202,17 +254,17 @@ async function run() {
         })
 
         // Enrollment Routes
-        app.get("/popular-classes", async(req, res)=>{
-            const result = await classCollection.find().sort({totalEnrolled: -1}).limit(6).toArray();
+        app.get("/popular-classes", async (req, res) => {
+            const result = await classCollection.find().sort({ totalEnrolled: -1 }).limit(6).toArray();
             res.send(result);
         })
 
-        app.get("/popular-instructors", async(req, res)=>{
+        app.get("/popular-instructors", async (req, res) => {
             const pipeline = [
                 {
                     $group: {
                         _id: "$instructorEmail",
-                        totalEnrolled: { $sum: "$totalEnrolled"}
+                        totalEnrolled: { $sum: "$totalEnrolled" }
                     }
                 },
                 {
@@ -224,7 +276,7 @@ async function run() {
                     }
                 },
                 {
-                    $projects:{
+                    $projects: {
                         _id: 0,
                         instructor: {
                             $arrayElemAt: ["instructor", 0]
@@ -233,7 +285,7 @@ async function run() {
                     }
                 },
                 {
-                    $sort:{
+                    $sort: {
                         totalEnrolled: -1
                     }
                 },
@@ -241,15 +293,15 @@ async function run() {
                     $limit: 6
                 }
             ]
-            const result= await classCollection.aggregate(pipeline).toArray();
+            const result = await classCollection.aggregate(pipeline).toArray();
             res.send(result);
         })
 
         // admin stats
-        app.get("/admin-stats", async(req, res)=>{
-            const approvedClasses = (await classCollection.find({status: "approved"}).toArray()).length;
-            const pendingClasses = (await classCollection.find({status: "pending"}).toArray()).length;
-            const instructor = (await userCollection.find({role: "instructor"}).toArray()).length;
+        app.get("/admin-stats", async (req, res) => {
+            const approvedClasses = (await classCollection.find({ status: "approved" }).toArray()).length;
+            const pendingClasses = (await classCollection.find({ status: "pending" }).toArray()).length;
+            const instructor = (await userCollection.find({ role: "instructor" }).toArray()).length;
             const totalClasses = (await classCollection.find().toArray()).length;
             const totalEnrolled = (await enrolledCollection.find().toArray()).length;
 
@@ -266,20 +318,20 @@ async function run() {
         // instructor
         // get all instructor
 
-        app.get("/instructors", async (req, res)=>{
-            const result = await userCollection.find({role: "instructor"}).toArray();
+        app.get("/instructors", async (req, res) => {
+            const result = await userCollection.find({ role: "instructor" }).toArray();
         })
 
         // get 
-        app.get("/enrolled-classes/:email", async(req, res)=>{
+        app.get("/enrolled-classes/:email", async (req, res) => {
             const email = req.params.email;
-            const query = {userEmail : email};
+            const query = { userEmail: email };
             const pipeline = [
                 {
                     $match: query
                 },
                 {
-                    $lookup:{
+                    $lookup: {
                         from: "classes",
                         localField: "classId",
                         foreignField: "_id",
@@ -290,15 +342,15 @@ async function run() {
                     $unwind: "$classes"
                 },
                 {
-                    $lookup:{
+                    $lookup: {
                         from: "users",
                         localField: "classes.instructorEmail",
                         foreignField: "email",
                         as: "instructor"
                     }
-                }, 
+                },
                 {
-                    $project:{
+                    $project: {
                         _id: 0,
                         instructor: {
                             $arrayElemAt: ["$instructor", 0]
@@ -312,7 +364,7 @@ async function run() {
         })
 
         // applied for instructor
-        app.post("/apply-instructor", async(req, res)=>{
+        app.post("/apply-instructor", async (req, res) => {
             const data = req.body;
             const result = await appliedCollection.insertOne(data);
             res.send(result);
@@ -323,6 +375,8 @@ async function run() {
             const result = await appliedCollection.findOne(email);
             res.send(result);
         })
+
+
 
 
 
