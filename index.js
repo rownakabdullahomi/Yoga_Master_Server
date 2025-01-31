@@ -263,6 +263,53 @@ async function run() {
             res.send(result);
         })
 
+        // instructor
+        // get all instructor
+
+        app.get("/instructors", async (req, res)=>{
+            const result = await userCollection.find({role: "instructor"}).toArray();
+        })
+
+        // get 
+        app.get("/enrolled-classes/:email", async(req, res)=>{
+            const email = req.params.email;
+            const query = {userEmail : email};
+            const pipeline = [
+                {
+                    $match: query
+                },
+                {
+                    $lookup:{
+                        from: "classes",
+                        localField: "classId",
+                        foreignField: "_id",
+                        as: "classes"
+                    }
+                },
+                {
+                    $unwind: "$classes"
+                },
+                {
+                    $lookup:{
+                        from: "users",
+                        localField: "classes.instructorEmail",
+                        foreignField: "email",
+                        as: "instructor"
+                    }
+                }, 
+                {
+                    $project:{
+                        _id: 0,
+                        instructor: {
+                            $arrayElemAt: ["$instructor", 0]
+                        },
+                        classes: 1
+                    }
+                }
+            ];
+            const result = await enrolledCollection.aggregate(pipeline).toArray();
+            res.send(result);
+        })
 
 
 
