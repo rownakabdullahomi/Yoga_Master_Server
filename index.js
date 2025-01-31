@@ -160,7 +160,7 @@ async function run() {
         })
 
         // post payment info to db
-        app.post('/payment-info', verifyJWT, async (req, res) => {
+        app.post('/payment-info', async (req, res) => {
             const paymentInfo = req.body;
             const classesId = paymentInfo.classesId;
             const userEmail = paymentInfo.userEmail;
@@ -227,7 +227,7 @@ async function run() {
                     $projects:{
                         _id: 0,
                         instructor: {
-                            $arrayElement: ["instructor", 0]
+                            $arrayElemAt: ["instructor", 0]
                         },
                         totalEnrolled: 1
                     }
@@ -242,6 +242,24 @@ async function run() {
                 }
             ]
             const result= await classCollection.aggregate(pipeline).toArray();
+            res.send(result);
+        })
+
+        // admin stats
+        app.get("/admin-stats", async(req, res)=>{
+            const approvedClasses = (await classCollection.find({status: "approved"}).toArray()).length;
+            const pendingClasses = (await classCollection.find({status: "pending"}).toArray()).length;
+            const instructor = (await userCollection.find({role: "instructor"}).toArray()).length;
+            const totalClasses = (await classCollection.find().toArray()).length;
+            const totalEnrolled = (await enrolledCollection.find().toArray()).length;
+
+            const result = {
+                approvedClasses,
+                pendingClasses,
+                instructor,
+                totalClasses,
+                totalEnrolled
+            }
             res.send(result);
         })
 
