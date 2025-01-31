@@ -201,6 +201,50 @@ async function run() {
             res.send({ total });
         })
 
+        // Enrollment Routes
+        app.get("/popular-classes", async(req, res)=>{
+            const result = await classCollection.find().sort({totalEnrolled: -1}).limit(6).toArray();
+            res.send(result);
+        })
+
+        app.get("/popular-instructors", async(req, res)=>{
+            const pipeline = [
+                {
+                    $group: {
+                        _id: "$instructorEmail",
+                        totalEnrolled: { $sum: "$totalEnrolled"}
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "_id",
+                        foreignField: "email",
+                        as: "instructor"
+                    }
+                },
+                {
+                    $projects:{
+                        _id: 0,
+                        instructor: {
+                            $arrayElement: ["instructor", 0]
+                        },
+                        totalEnrolled: 1
+                    }
+                },
+                {
+                    $sort:{
+                        totalEnrolled: -1
+                    }
+                },
+                {
+                    $limit: 6
+                }
+            ]
+            const result= await classCollection.aggregate(pipeline).toArray();
+            res.send(result);
+        })
+
 
 
 
