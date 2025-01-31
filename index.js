@@ -311,6 +311,19 @@ async function run() {
             res.send(result);
         })
 
+        // applied for instructor
+        app.post("/apply-instructor", async(req, res)=>{
+            const data = req.body;
+            const result = await appliedCollection.insertOne(data);
+            res.send(result);
+        })
+        // get which users applied as instructor
+        app.get("/applied-instructors/:email", async (req, res) => {
+            const email = req.params.email;
+            const result = await appliedCollection.findOne(email);
+            res.send(result);
+        })
+
 
 
 
