@@ -4,6 +4,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
+const jwt = require("jsonwebtoken");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -12,6 +13,21 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
+// verify JWT token
+const verifyJWT = (req, res, next) => {
+    const authorization = req.header.authorization;
+    if (!authorization) {
+        return res.status(401).send({ message: "Invalid Authorization" });
+    }
+    const token = authorization?.split(" ")[1];
+    jwt.verify(token, process.env.JWT_ACCESS_TOKEN, (err, decoded) => {
+        if (err) {
+            return res.status(403).send({ message: "Forbidden Access" });
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
 
 const uri = process.env.DB_CONNECTION_STRING;
 
@@ -39,6 +55,14 @@ async function run() {
         const appliedCollection = client.db("yogaMasterDB").collection("applied");
 
 
+        // post JWT token
+        app.post("/set-token", async (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.JWT_ACCESS_TOKEN, {
+                expiresIn: "365d"
+            });
+            res.send({ token })
+        })
         // users apis
         // post a new user
         app.post("/new-user", async (req, res) => {
@@ -61,7 +85,7 @@ async function run() {
             res.send(result);
         })
         // get user by email
-        app.post("/user/:email", async (req, res) => {
+        app.post("/user/:email", verifyJWT, async (req, res) => {
             const email = req.params.email;
             const query = { email };
             const result = await userCollection.findOne(query);
@@ -69,7 +93,7 @@ async function run() {
         })
 
         // delete user by id
-        app.delete("/delete-user/:id", async (req, res) => {
+        app.delete("/delete-user/:id", verifyJWT, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await userCollection.deleteOne(query);
@@ -77,7 +101,7 @@ async function run() {
         })
 
         // update user by id
-        app.put("/user/:id", async (req, res) => {
+        app.put("/update-user/:id", async (req, res) => {
             const id = req.params.id;
             const { name, role, email, address, phone, about, photoUrl, skills } = req.body;
             const query = { _id: new ObjectId(id) };
